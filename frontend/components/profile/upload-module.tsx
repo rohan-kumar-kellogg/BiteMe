@@ -75,7 +75,8 @@ export function UploadModule({ onUpload, isUploading }: UploadModuleProps) {
         resetState()
       }, 2000)
     } catch (error) {
-      setErrorMessage('Upload failed. Please try again.')
+      const msg = error instanceof Error ? error.message : 'Upload failed. Please try again.'
+      setErrorMessage(msg)
       setState('error')
     }
   }

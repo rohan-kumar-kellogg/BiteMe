@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ArrowRight } from 'lucide-react'
@@ -36,6 +37,9 @@ export function WelcomeScreen({ onSubmit, isLoading, initialUsername = '', initi
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-6 py-4">
         <BiteMeLogo iconSize={32} />
+        <Button asChild variant="ghost" size="sm" className="rounded-full">
+          <Link href="/model-card">Model Card</Link>
+        </Button>
       </header>
 
       {/* Hero Section */}

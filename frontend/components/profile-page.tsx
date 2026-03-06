@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Link from 'next/link'
 import { ArrowLeft, LogOut, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BiteMeLogo } from '@/components/bite-me-logo'
@@ -106,6 +107,9 @@ export function ProfilePage({
             </Button>
             <Button variant="ghost" size="icon" onClick={onLogout} className="w-9 h-9" title="Logout">
               <LogOut className="w-4 h-4" />
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="h-9 px-3">
+              <Link href="/model-card">Model Card</Link>
             </Button>
             {activeView === 'profile' && (
               <Button

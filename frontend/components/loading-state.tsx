@@ -2,7 +2,15 @@
 
 import { BiteMePieIcon } from '@/components/bite-me-logo'
 
-export function LoadingState() {
+interface LoadingStateProps {
+  title?: string
+  subtitle?: string
+}
+
+export function LoadingState({
+  title = 'Loading your profile...',
+  subtitle = 'Preparing your BiteMe experience',
+}: LoadingStateProps) {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-primary/[0.03] via-transparent to-primary/[0.02]">
       <div className="text-center space-y-8">
@@ -19,10 +27,10 @@ export function LoadingState() {
         
         <div className="space-y-3">
           <h2 className="text-xl md:text-2xl font-semibold text-foreground">
-            Analyzing your taste...
+            {title}
           </h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            Preparing your flavor fingerprint
+            {subtitle}
           </p>
         </div>
 

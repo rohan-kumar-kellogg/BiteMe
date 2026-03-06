@@ -8,12 +8,14 @@ interface ErrorStateProps {
   message?: string
   onRetry?: () => void
   onGoHome?: () => void
+  goHomeLabel?: string
 }
 
 export function ErrorState({ 
   message = 'Something went wrong. Please try again.', 
   onRetry, 
-  onGoHome 
+  onGoHome,
+  goHomeLabel = 'Start Over',
 }: ErrorStateProps) {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -43,7 +45,7 @@ export function ErrorState({
           {onGoHome && (
             <Button onClick={onGoHome} variant="outline" className="rounded-full gap-2">
               <Home className="w-4 h-4" />
-              Start Over
+              {goHomeLabel}
             </Button>
           )}
         </div>

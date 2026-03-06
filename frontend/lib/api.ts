@@ -79,6 +79,17 @@ type ApiUpload = {
   }
 }
 
+type ApiUploadResponse = {
+  status: string
+  upload_id?: string | number
+  prediction?: {
+    predicted_label?: string
+    abstained?: boolean
+    rejected_as_not_food?: boolean
+  }
+  upload_debug?: unknown
+}
+
 type ApiRestaurantRecommendation = {
   restaurant: {
     id: string
@@ -293,39 +304,97 @@ async function parseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 30000): Promise<Response> {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s`)
+    }
+    throw err
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
+
 export async function loadOrCreateUser(username: string, email: string): Promise<LoadOrCreateResult> {
-  const response = await fetch(`${API_BASE}/users/load_or_create`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, email }),
-  })
-  const payload = await parseJson<{ created: boolean; user: ApiUserPayload }>(response)
-  return {
-    user: mapUserPayload(payload.user),
-    isNew: Boolean(payload.created),
+  console.info('[api] loadOrCreateUser start', { username })
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE}/users/load_or_create`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email }),
+      },
+      30000
+    )
+    const payload = await parseJson<{ created: boolean; user: ApiUserPayload }>(response)
+    console.info('[api] loadOrCreateUser success', { username, created: Boolean(payload.created) })
+    return {
+      user: mapUserPayload(payload.user),
+      isNew: Boolean(payload.created),
+    }
+  } catch (error) {
+    console.error('[api] loadOrCreateUser failed', { username, error })
+    throw error
   }
 }
 
 export async function getUserProfile(username: string): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}`)
-  const payload = await parseJson<{ user: ApiUserPayload; recent_uploads: ApiUpload[] }>(response)
-  return mapUserPayload(payload.user, payload.recent_uploads)
+  console.info('[api] getUserProfile start', { username })
+  try {
+    const response = await fetchWithTimeout(`${API_BASE}/users/${encodeURIComponent(username)}`, {}, 30000)
+    const payload = await parseJson<{ user: ApiUserPayload; recent_uploads: ApiUpload[] }>(response)
+    console.info('[api] getUserProfile success', { username, uploads: payload?.recent_uploads?.length || 0 })
+    return mapUserPayload(payload.user, payload.recent_uploads)
+  } catch (error) {
+    console.error('[api] getUserProfile failed', { username, error })
+    throw error
+  }
 }
 
 export async function getCompatibleUsers(username: string): Promise<CompatibleUser[]> {
-  const response = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}/compatible`)
-  const payload = await parseJson<{ compatible_users: ApiCompatibleUser[] }>(response)
-  return mapCompatibleUsers(payload.compatible_users)
+  console.info('[api] getCompatibleUsers start', { username })
+  try {
+    const response = await fetchWithTimeout(`${API_BASE}/users/${encodeURIComponent(username)}/compatible`, {}, 30000)
+    const payload = await parseJson<{ compatible_users: ApiCompatibleUser[] }>(response)
+    console.info('[api] getCompatibleUsers success', { username, count: payload?.compatible_users?.length || 0 })
+    return mapCompatibleUsers(payload.compatible_users)
+  } catch (error) {
+    console.error('[api] getCompatibleUsers failed', { username, error })
+    throw error
+  }
 }
 
-export async function uploadUserImage(username: string, file: File): Promise<void> {
+export async function uploadUserImage(username: string, file: File): Promise<ApiUploadResponse> {
+  console.info('[api] uploadUserImage start', { username, file: file?.name || 'unknown', size: file?.size || 0 })
   const formData = new FormData()
   formData.append('image', file)
-  const response = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}/uploads`, {
-    method: 'POST',
-    body: formData,
-  })
-  await parseJson(response)
+  const url = `${API_BASE}/users/${encodeURIComponent(username)}/uploads?debug_metadata=true`
+  try {
+    const response = await fetchWithTimeout(
+      url,
+      {
+        method: 'POST',
+        body: formData,
+      },
+      60000
+    )
+    const payload = await parseJson<ApiUploadResponse>(response)
+    console.info('[api] uploadUserImage success', {
+      username,
+      predicted_label: payload?.prediction?.predicted_label || '',
+      abstained: Boolean(payload?.prediction?.abstained),
+      rejected_as_not_food: Boolean(payload?.prediction?.rejected_as_not_food),
+    })
+    return payload
+  } catch (error) {
+    console.error('[api] uploadUserImage failed', { username, error })
+    throw error
+  }
 }
 
 export async function sendRecommendationFeedback(

@@ -299,6 +299,7 @@ async def upload_food_image(
     Upload one food image for a user.
     Runs the existing food prediction pipeline and updates persisted taste profile.
     """
+    LOGGER.info("upload endpoint entered: username=%s filename=%s", username, image.filename or "")
     user, _ = _load_or_create(username)
     uname = user["username"]
     ext = Path(image.filename or "upload.jpg").suffix.lower()
@@ -350,11 +351,19 @@ async def upload_food_image(
     if os.getenv("BITEME_UPLOAD_DEBUG_LOGS", "").strip().lower() in {"1", "true", "yes", "on"}:
         LOGGER.info("Upload debug metadata: %s", debug_payload)
 
+    LOGGER.info(
+        "upload endpoint returning: username=%s upload_id=%s predicted_label=%s abstained=%s",
+        uname,
+        upload_id,
+        str(pred.get("predicted_label", "")),
+        bool(pred.get("abstained", False)),
+    )
     return _safe_json(response_payload)
 
 
 @app.get("/api/users/{username}", summary="Get user profile")
 def get_user_profile(username: str):
+    LOGGER.info("profile endpoint entered: username=%s", username)
     user, _ = _load_or_create(username)
     others = store.list_users(exclude_username=user["username"])
     compatible = compute_compatible_users(user, others, limit=5)
@@ -362,6 +371,11 @@ def get_user_profile(username: str):
     uploads = store.list_uploads(user["username"], limit=30)
     for row in uploads:
         row["prediction"] = normalize_prediction_labels(row.get("prediction", {}))
+    LOGGER.info(
+        "profile endpoint returning: username=%s uploads=%s",
+        user["username"],
+        len(uploads),
+    )
     return _safe_json({"status": "ok", "user": _user_payload(user, compatible, rankings), "recent_uploads": uploads})
 
 
