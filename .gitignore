@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+.next/
+
+# Mac
+.DS_Store
+
+# IDE
+.idea/
+
+# datasets
+data/
+food101_data/
+images/
+public_images/
+reports/

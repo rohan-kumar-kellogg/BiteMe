@@ -1,0 +1,13 @@
+numpy
+pandas
+scikit-learn
+torch
+torchvision
+transformers
+pillow
+pillow-heif
+tqdm
+hdbscan
+fastapi
+uvicorn
+python-multipart
