@@ -24,6 +24,25 @@ BLENDED_PAIR_W = 0.10
 
 _LABEL_TEXT_EMB_CACHE: dict[tuple[str, ...], tuple[dict[str, np.ndarray], list[str]]] = {}
 
+FOOD_GATE_MIN_SCORE = 0.43
+FOOD_GATE_HARD_MIN = 0.30
+NON_FOOD_MARGIN_MIN = 0.035
+
+FOOD_PROMPTS = [
+    "a close-up photo of food on a plate",
+    "a restaurant meal photo",
+    "a dish served in a bowl",
+    "a plated food dish",
+    "a cooked meal",
+]
+NON_FOOD_PROMPTS = [
+    "a photo of grass and plants",
+    "a photo of a wall or building interior",
+    "a photo of random objects",
+    "a nature scene without food",
+    "a landscape photo",
+]
+
 
 def _row_norm(x: np.ndarray) -> np.ndarray:
     return x / (np.linalg.norm(x, axis=1, keepdims=True) + 1e-12)
@@ -74,6 +93,40 @@ def _label_prompt_set(label: str) -> list[str]:
         f"a plated serving of {lbl}",
         f"a dish of {lbl}",
     ]
+
+
+def _sigmoid(x: float) -> float:
+    return float(1.0 / (1.0 + np.exp(-x)))
+
+
+def _food_gate_score(encoder: VisionEncoder, image_emb: np.ndarray) -> tuple[float, float, float]:
+    """
+    Returns:
+      - food_gate_score in [0,1]
+      - mean food prompt similarity
+      - mean non-food prompt similarity
+    """
+    food_sims = encoder.score_image_prompts_from_emb(image_emb, FOOD_PROMPTS).astype(np.float32)
+    non_food_sims = encoder.score_image_prompts_from_emb(image_emb, NON_FOOD_PROMPTS).astype(np.float32)
+    food_mean = float(np.mean(food_sims))
+    non_food_mean = float(np.mean(non_food_sims))
+    # Temperature keeps this conservative to avoid rejecting valid food.
+    gate = _sigmoid((food_mean - non_food_mean) / 0.10)
+    return float(gate), food_mean, non_food_mean
+
+
+def _should_reject_as_not_food(
+    *,
+    predicted_score: float,
+    second_score: float,
+    confidence_threshold: float,
+    food_gate_score: float,
+) -> bool:
+    top_margin = float(predicted_score - second_score)
+    if food_gate_score < FOOD_GATE_HARD_MIN:
+        return True
+    weak_vs_threshold = predicted_score < max(float(confidence_threshold) + 0.03, 0.90)
+    return bool(food_gate_score < FOOD_GATE_MIN_SCORE and (weak_vs_threshold or top_margin < NON_FOOD_MARGIN_MIN))
 
 
 def _build_label_text_embeddings(
@@ -260,6 +313,7 @@ def predict_dish(
                 "course": str(cand.get("course", "")),
                 "protein_type": str(cand.get("protein_type", "")),
                 "image_path": str(cand.get("image_path", "")),
+                "query_embedding": emb.astype(np.float32, copy=False).tolist(),
                 "cosine_similarity": sim_raw,
                 "image_image_sim_01": image_image_sim_01,
                 "image_text_sim_01": image_text_sim_01,
@@ -339,17 +393,42 @@ def predict_dish_with_confidence(
     best = top[0] if top else {}
     predicted_label = str(best.get("dish_label", best.get("dish_class", ""))) if best else ""
     predicted_score = float(best.get("final_score", np.nan)) if best else float("nan")
+    second_score = float(top[1].get("final_score", np.nan)) if len(top) > 1 else float("nan")
     thr = float(np.clip(confidence_threshold, 0.0, 1.0))
-    abstained = bool(not best or np.isnan(predicted_score) or predicted_score < thr)
+    food_gate_score = float("nan")
+    food_prompt_mean = float("nan")
+    non_food_prompt_mean = float("nan")
+    rejected_as_not_food = False
+    if best and encoder is not None:
+        try:
+            emb = np.asarray(best.get("query_embedding", []), dtype=np.float32).reshape(-1)
+            if emb.size > 0:
+                food_gate_score, food_prompt_mean, non_food_prompt_mean = _food_gate_score(encoder, emb)
+                rejected_as_not_food = _should_reject_as_not_food(
+                    predicted_score=predicted_score,
+                    second_score=(second_score if np.isfinite(second_score) else -1.0),
+                    confidence_threshold=thr,
+                    food_gate_score=food_gate_score,
+                )
+        except Exception:
+            rejected_as_not_food = False
+    abstained = bool(not best or np.isnan(predicted_score) or predicted_score < thr or rejected_as_not_food)
     if abstained:
         top_labels = [str(x.get("dish_label", x.get("dish_class", ""))).replace("_", " ") for x in top[:3]]
         top_labels = [x for x in top_labels if x]
-        reason = (
-            f"Top prediction confidence {predicted_score:.3f} is below threshold {thr:.2f}."
-            if best and not np.isnan(predicted_score)
-            else "No valid prediction candidates available."
-        )
-        fallback_msg = "Not confident enough to make a single prediction."
+        if rejected_as_not_food:
+            reason = (
+                f"Rejected as non-food (food_gate={food_gate_score:.3f}, top1={predicted_score:.3f}, "
+                f"top1-top2={predicted_score - (second_score if np.isfinite(second_score) else 0.0):.3f})."
+            )
+            fallback_msg = "Image does not appear to be food."
+        else:
+            reason = (
+                f"Top prediction confidence {predicted_score:.3f} is below threshold {thr:.2f}."
+                if best and not np.isnan(predicted_score)
+                else "No valid prediction candidates available."
+            )
+            fallback_msg = "Not confident enough to make a single prediction."
         if top_labels:
             fallback_msg += f" This looks closest to: {', '.join(top_labels)}"
     else:
@@ -367,16 +446,28 @@ def predict_dish_with_confidence(
             "mlp_score": float(x.get("mlp_blend_score", x.get("dish_agreement", np.nan))),
             "pair_score": float(x.get("pair_agreement", np.nan)),
             "image_path": str(x.get("image_path", "")),
+            "query_embedding": x.get("query_embedding", None),
         }
         for x in top[:3]
     ]
+    if rejected_as_not_food:
+        top3_candidates = []
     return {
-        "predicted_label": ("" if abstained else predicted_label),
+        "predicted_label": ("not_food" if rejected_as_not_food else ("" if abstained else predicted_label)),
         "predicted_score": predicted_score,
         "abstained": abstained,
+        "rejected_as_not_food": bool(rejected_as_not_food),
         "abstain_reason": reason,
         "top3_candidates": top3_candidates,
         "confidence_threshold": thr,
+        "food_gate_score": food_gate_score,
+        "food_prompt_mean": food_prompt_mean,
+        "non_food_prompt_mean": non_food_prompt_mean,
+        "top1_top2_margin": (
+            float(predicted_score - second_score)
+            if np.isfinite(predicted_score) and np.isfinite(second_score)
+            else float("nan")
+        ),
         "scoring_mode": str(scoring_mode),
         "fallback_message": fallback_msg,
         "raw_topn": top[: max(1, int(top_n))],

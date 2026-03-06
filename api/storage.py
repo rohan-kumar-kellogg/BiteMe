@@ -27,6 +27,7 @@ class ProfileStore:
                 """
                 CREATE TABLE IF NOT EXISTS users (
                   username TEXT PRIMARY KEY,
+                  email TEXT NOT NULL DEFAULT '',
                   created_at TEXT NOT NULL,
                   archetype TEXT NOT NULL,
                   archetype_description TEXT NOT NULL,
@@ -49,6 +50,28 @@ class ProfileStore:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS invites (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  from_username TEXT NOT NULL,
+                  to_username TEXT NOT NULL,
+                  to_email TEXT NOT NULL DEFAULT '',
+                  restaurant_name TEXT NOT NULL,
+                  invite_date TEXT NOT NULL,
+                  invite_time TEXT NOT NULL,
+                  message TEXT NOT NULL DEFAULT '',
+                  status TEXT NOT NULL DEFAULT 'pending',
+                  created_at TEXT NOT NULL
+                )
+                """
+            )
+            user_cols = {
+                str(row["name"])
+                for row in conn.execute("PRAGMA table_info(users)").fetchall()
+            }
+            if "email" not in user_cols:
+                conn.execute("ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ''")
             conn.commit()
 
     def get_user(self, username: str) -> dict | None:
@@ -64,6 +87,7 @@ class ProfileStore:
         self,
         *,
         username: str,
+        email: str,
         created_at: str,
         archetype: str,
         archetype_description: str,
@@ -76,9 +100,10 @@ class ProfileStore:
         with self._connect() as conn:
             conn.execute(
                 """
-                INSERT INTO users(username, created_at, archetype, archetype_description, archetype_graphic, observations, joke, profile_json)
-                VALUES(?,?,?,?,?,?,?,?)
+                INSERT INTO users(username, email, created_at, archetype, archetype_description, archetype_graphic, observations, joke, profile_json)
+                VALUES(?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(username) DO UPDATE SET
+                  email=excluded.email,
                   archetype=excluded.archetype,
                   archetype_description=excluded.archetype_description,
                   archetype_graphic=excluded.archetype_graphic,
@@ -88,6 +113,7 @@ class ProfileStore:
                 """,
                 (
                     username,
+                    email,
                     created_at,
                     archetype,
                     archetype_description,
@@ -98,6 +124,55 @@ class ProfileStore:
                 ),
             )
             conn.commit()
+
+    def add_invite(
+        self,
+        *,
+        from_username: str,
+        to_username: str,
+        to_email: str,
+        restaurant_name: str,
+        invite_date: str,
+        invite_time: str,
+        message: str,
+        status: str = "pending",
+    ) -> int:
+        created_at = utc_now_iso()
+        with self._connect() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO invites(
+                  from_username, to_username, to_email, restaurant_name, invite_date, invite_time, message, status, created_at
+                ) VALUES(?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    from_username,
+                    to_username,
+                    to_email,
+                    restaurant_name,
+                    invite_date,
+                    invite_time,
+                    message,
+                    status,
+                    created_at,
+                ),
+            )
+            conn.commit()
+            return int(cur.lastrowid)
+
+    def list_invites_for_user(self, username: str, limit: int = 50) -> list[dict]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, from_username, to_username, to_email, restaurant_name, invite_date, invite_time, message, status, created_at
+                FROM invites
+                WHERE from_username = ? OR to_username = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (username, username, int(limit)),
+            ).fetchall()
+        return [dict(r) for r in rows]
 
     def add_upload(self, *, username: str, image_path: str, prediction: dict) -> int:
         created_at = utc_now_iso()
@@ -131,6 +206,15 @@ class ProfileStore:
             d["prediction"] = json.loads(d.pop("prediction_json"))
             out.append(d)
         return out
+
+    def delete_upload(self, *, username: str, upload_id: int) -> bool:
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM uploads WHERE username = ? AND id = ?",
+                (username, int(upload_id)),
+            )
+            conn.commit()
+            return int(cur.rowcount) > 0
 
     def list_users(self, exclude_username: str | None = None) -> list[dict]:
         with self._connect() as conn:

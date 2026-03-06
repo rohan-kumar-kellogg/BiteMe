@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 
 from api.archetypes import choose_archetype
+from api.label_normalization import normalize_label, normalize_prediction_labels, normalize_profile_labels
 from api.taste_profile import (
     compute_relative_rankings,
     dimension_vector,
@@ -13,6 +14,7 @@ from api.taste_profile import (
     init_taste_profile,
     update_taste_profile,
 )
+from api.storage import utc_now_iso
 
 
 def empty_profile() -> dict[str, Any]:
@@ -40,7 +42,23 @@ def _trait_tokens(cuisine: str, dish_label: str, protein_type: str) -> list[str]
     p = str(protein_type).lower()
     if "spicy" in d or "curry" in d:
         t.append("spice-forward")
-    if any(x in d for x in ["cake", "pie", "dessert", "mousse", "ice cream", "donut"]):
+    if any(
+        x in d
+        for x in [
+            "cake",
+            "pie",
+            "dessert",
+            "mousse",
+            "ice cream",
+            "donut",
+            "gelato",
+            "tiramisu",
+            "brownie",
+            "pastry",
+            "cheesecake",
+            "cookie",
+        ]
+    ):
         t.append("dessert-leaning")
     if p in {"fish", "seafood", "shrimp"}:
         t.append("seafood-leaning")
@@ -51,27 +69,59 @@ def _trait_tokens(cuisine: str, dish_label: str, protein_type: str) -> list[str]
         t.append("plant-forward")
     if any(x in d for x in ["pasta", "rice", "bread", "noodle", "ramen", "pizza", "donut", "dumpling", "pie"]):
         t.append("carb-forward")
-    if any(x in d for x in ["burger", "fries", "mac", "cheese", "lasagna"]):
+    if any(x in d for x in ["burger", "fries", "mac", "cheese", "lasagna", "pizza"]):
         t.append("comfort-food")
     if c and c != "unknown":
         t.append(f"cuisine:{c}")
     return t
 
 
+def _infer_cuisine_from_dish(dish_label: str, fallback: str = "Unknown") -> str:
+    d = str(dish_label).lower().replace("_", " ")
+    mapping: list[tuple[list[str], str]] = [
+        (["pizza", "pasta", "tiramisu", "gelato", "risotto", "lasagna"], "italian"),
+        (["ramen", "sushi", "udon", "soba", "tempura"], "japanese"),
+        (["taco", "tacos", "burrito", "quesadilla", "enchilada"], "mexican"),
+        (["croissant", "pastry", "macaron", "eclair"], "french"),
+        (["pho", "banh mi"], "vietnamese"),
+    ]
+    for terms, cuisine in mapping:
+        if any(term in d for term in terms):
+            return cuisine
+    return str(fallback or "Unknown")
+
+
 def update_profile_from_prediction(profile: dict[str, Any], prediction: dict) -> dict[str, Any]:
-    out = dict(profile)
+    out, _ = normalize_profile_labels(dict(profile))
     out.setdefault("upload_count", 0)
     out.setdefault("favorite_cuisines", {})
     out.setdefault("favorite_dishes", {})
     out.setdefault("favorite_traits", {})
     out.setdefault("last_predictions", [])
 
-    top3 = prediction.get("top3_candidates", []) or []
+    normalized_prediction = normalize_prediction_labels(prediction)
+    predicted_label = str(normalized_prediction.get("predicted_label", "") or "").strip().lower()
+    if bool(normalized_prediction.get("abstained", False)) or predicted_label in {"not_food", "unknown"}:
+        # Keep upload history, but skip taste-memory updates on abstained/non-food frames.
+        out["upload_count"] = int(out["upload_count"]) + 1
+        out["last_predictions"] = ([normalized_prediction] + list(out["last_predictions"]))[:30]
+        out["taste_profile"]["analysis"] = generate_detailed_analysis(out)
+        return out
+
+    top3 = normalized_prediction.get("top3_candidates", []) or []
     weights = [1.0, 0.6, 0.3]
+    pred_conf = float(np.clip(float(normalized_prediction.get("predicted_score", 0.5) or 0.5), 0.0, 1.0))
     for i, cand in enumerate(top3[:3]):
-        w = weights[i]
-        cuisine = str(cand.get("cuisine", "Unknown"))
-        dish = str(cand.get("dish_label", cand.get("dish_class", "Unknown")))
+        conf = cand.get("final_score", cand.get("score", pred_conf))
+        try:
+            conf_val = float(np.clip(float(conf), 0.0, 1.0))
+        except (TypeError, ValueError):
+            conf_val = pred_conf
+        # Confidence-weighted memory update: low-confidence candidates have weaker impact.
+        w = float(weights[i]) * conf_val
+        raw_cuisine = str(cand.get("cuisine", "Unknown"))
+        dish = normalize_label(cand.get("dish_label", cand.get("dish_class", "Unknown")))
+        cuisine = _infer_cuisine_from_dish(dish, fallback=raw_cuisine)
         protein = str(cand.get("protein_type", ""))
         out["favorite_cuisines"][cuisine] = float(out["favorite_cuisines"].get(cuisine, 0.0) + w)
         out["favorite_dishes"][dish] = float(out["favorite_dishes"].get(dish, 0.0) + w)
@@ -79,16 +129,20 @@ def update_profile_from_prediction(profile: dict[str, Any], prediction: dict) ->
             out["favorite_traits"][tok] = float(out["favorite_traits"].get(tok, 0.0) + w)
 
     out["upload_count"] = int(out["upload_count"]) + 1
-    out["last_predictions"] = ([prediction] + list(out["last_predictions"]))[:30]
-    out = update_taste_profile(out, prediction)
+    out["last_predictions"] = ([normalized_prediction] + list(out["last_predictions"]))[:30]
+    out = update_taste_profile(out, normalized_prediction)
     out["taste_profile"]["analysis"] = generate_detailed_analysis(out)
     return out
 
 
 def infer_archetype(profile: dict[str, Any]) -> tuple[str, str, str, str, list[str]]:
+    normalized_profile, _ = normalize_profile_labels(profile)
+    profile.update(normalized_profile)
     prev = str(profile.get("archetype_current", "")).strip() or None
     out = choose_archetype(profile, previous_archetype=prev)
     profile["archetype_current"] = out["archetype"]
+    profile["primary_archetype"] = out.get("primary_archetype", out["archetype"])
+    profile["secondary_trait"] = out.get("secondary_trait", "")
     profile["behavior_features"] = out["behavior_features"]
     profile["archetype_scores"] = out["archetype_scores"]
     profile["archetype_stability"] = out["stability"]
@@ -102,12 +156,81 @@ def infer_archetype(profile: dict[str, Any]) -> tuple[str, str, str, str, list[s
     )
 
 
+def update_profile_from_recommendation_click(
+    profile: dict[str, Any],
+    *,
+    dish_label: str,
+    cuisine: str = "",
+    signal_weight: float = 0.22,
+    record_event: bool = True,
+    event_id: str | None = None,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    """
+    Lightweight feedback update for recommendation clicks.
+    This is intentionally softer than image-upload updates.
+    """
+    out, _ = normalize_profile_labels(dict(profile))
+    out.setdefault("favorite_cuisines", {})
+    out.setdefault("favorite_dishes", {})
+    out.setdefault("favorite_traits", {})
+    out.setdefault("recommendation_feedback", [])
+
+    dish = normalize_label(dish_label)
+    cuisine_clean = str(cuisine or "").strip()
+    w = float(np.clip(float(signal_weight), 0.05, 0.40))
+
+    # Softer signal than uploads: only nudge the profile.
+    out["favorite_dishes"][dish] = float(out["favorite_dishes"].get(dish, 0.0) + w)
+    resolved_cuisine = _infer_cuisine_from_dish(dish, fallback=cuisine_clean or "Unknown")
+    if resolved_cuisine and resolved_cuisine.lower() != "unknown":
+        out["favorite_cuisines"][resolved_cuisine] = float(out["favorite_cuisines"].get(resolved_cuisine, 0.0) + (0.55 * w))
+
+    for tok in _trait_tokens(resolved_cuisine or "Unknown", dish, ""):
+        out["favorite_traits"][tok] = float(out["favorite_traits"].get(tok, 0.0) + (0.35 * w))
+
+    # Keep fingerprint responsive to recommendation clicks (softer than uploads).
+    synthetic_conf = float(np.clip(0.55 + (0.70 * w), 0.45, 0.88))
+    synthetic_prediction = {
+        "predicted_label": dish,
+        "predicted_score": synthetic_conf,
+        "top3_candidates": [
+            {
+                "dish_label": dish,
+                "dish_class": dish,
+                "cuisine": resolved_cuisine,
+                "protein_type": "",
+                "final_score": synthetic_conf,
+            }
+        ],
+    }
+    out = update_taste_profile(out, synthetic_prediction)
+    out["taste_profile"]["analysis"] = generate_detailed_analysis(out)
+
+    if record_event:
+        out["recommendation_feedback"] = (
+            [
+                {
+                    "event_id": str(event_id or ""),
+                    "event_type": "recommendation_click",
+                    "dish_label": dish,
+                    "cuisine": resolved_cuisine,
+                    "signal_weight": w,
+                    "timestamp": str(timestamp or utc_now_iso()),
+                }
+            ]
+            + list(out["recommendation_feedback"])
+        )[:200]
+    return out
+
+
 def _profile_vector(profile: dict[str, Any]) -> dict[str, float]:
     v: dict[str, float] = defaultdict(float)
     for k, val in profile.get("favorite_cuisines", {}).items():
         v[f"c:{k.lower()}"] += float(val)
     for k, val in profile.get("favorite_dishes", {}).items():
-        v[f"d:{k.lower()}"] += float(val)
+        nk = normalize_label(k).lower()
+        v[f"d:{nk}"] += float(val)
     for k, val in profile.get("favorite_traits", {}).items():
         v[f"t:{k.lower()}"] += float(val)
     return dict(v)
@@ -164,6 +287,7 @@ def compute_compatible_users(target_user: dict, others: list[dict], limit: int =
         rows.append(
             {
                 "compatible_username": str(u["username"]),
+                "compatible_email": str(u.get("email", "") or ""),
                 "compatibility_score": round(float(sim), 4),
                 "archetype": str(u.get("archetype", "")),
                 "why_you_match": _compatibility_explanation(target_user.get("profile", {}), u.get("profile", {})),
