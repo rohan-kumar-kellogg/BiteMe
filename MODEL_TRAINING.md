@@ -121,7 +121,7 @@ python utils/data_generator.py --manifest_csv images/manifest.csv
 python utils/train_tag_head_from_manifest.py --manifest_csv images/manifest.csv --out_ckpt data/models/clip_mlp_tag_head.pt --reports_dir reports --n_eval 500
 python utils/eval_rerank.py --manifest_csv images/manifest.csv --tag_head_ckpt data/models/clip_mlp_tag_head.pt --n_eval 500 --top_k 50 --top_n 3
 python utils/full_diagnostic.py
-streamlit run streamlit_app.py
+streamlit run archive/legacy_streamlit/streamlit_app.py
 ```
 
 Expected strict counts:
@@ -170,7 +170,7 @@ Outputs:
 
 ## 3) Use in Streamlit automatically
 
-`streamlit_app.py` will auto-load `data/models/label_heads.pkl` when present and use it to improve dish/cuisine predictions.
+`archive/legacy_streamlit/streamlit_app.py` will auto-load `data/models/label_heads.pkl` when present and use it to improve dish/cuisine predictions.
 
 ## 4) Deep model retraining (ResNet multi-task)
 
@@ -274,7 +274,7 @@ This highlights high-similarity wrong predictions for targeted data cleanup.
 Run app:
 
 ```bash
-streamlit run streamlit_app.py
+streamlit run archive/legacy_streamlit/streamlit_app.py
 ```
 
 Sidebar now shows:
@@ -336,7 +336,7 @@ This writes:
 ## Label QC app
 
 ```bash
-streamlit run streamlit_label_qc.py
+streamlit run archive/legacy_streamlit/streamlit_label_qc.py
 ```
 
 Then:

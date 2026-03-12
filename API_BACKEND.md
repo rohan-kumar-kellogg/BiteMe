@@ -52,7 +52,8 @@ Docs:
 
 ## Notes
 
-- Existing Streamlit app is untouched and can run in parallel.
+- Production runtime is FastAPI + Next.js.
+- Legacy Streamlit tools were archived under `archive/legacy_streamlit/`.
 - API uses baseline scoring mode by default for stability.
 
 ## Demo Data Seeding
@@ -60,13 +61,13 @@ Docs:
 Populate local demo users with rich, distinct taste profiles:
 
 ```bash
-python utils/seed_demo_users.py --reset_demo_users
+python scripts/seed_demo_users.py --reset_existing_demo
 ```
 
-Optional custom DB/summary:
+Optional custom DB path:
 
 ```bash
-python utils/seed_demo_users.py --db_path data/app_profiles.db --summary_json reports/demo_seed_summary.json --reset_demo_users
+python scripts/seed_demo_users.py --db_path data/app_profiles.db --reset_existing_demo
 ```
 
 Demo usernames:

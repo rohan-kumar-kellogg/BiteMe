@@ -49,7 +49,7 @@ def _print_data_info(dishes_path: Path, vectors_path: Path):
 
 def _assert_streamlit_key_usage(streamlit_path: Path):
     text = streamlit_path.read_text()
-    assert 'best.get("dish_label"' in text, "streamlit_app.py is not reading dish_label from predict_dish results."
+    assert 'best.get("dish_label"' in text, "archived streamlit app is not reading dish_label from predict_dish results."
     print("Streamlit key check: PASS (uses dish_label)")
 
 
@@ -68,7 +68,7 @@ def main():
     data_dir = PROJECT_ROOT / "data"
     dishes_path = data_dir / "dishes.csv"
     vectors_path = data_dir / "dish_vectors.npy"
-    streamlit_path = PROJECT_ROOT / "streamlit_app.py"
+    streamlit_path = PROJECT_ROOT / "archive" / "legacy_streamlit" / "streamlit_app.py"
     tag_ckpt = data_dir / "models" / "clip_mlp_tag_head.pt"
 
     dishes_df, dish_vectors = _print_data_info(dishes_path, vectors_path)

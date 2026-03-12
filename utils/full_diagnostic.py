@@ -138,7 +138,7 @@ def main():
     norms = np.linalg.norm(vecs.astype(np.float32, copy=False), axis=1)
     print(f"L2 norms mean/min/max: {float(norms.mean()):.6f} / {float(norms.min()):.6f} / {float(norms.max()):.6f}")
 
-    streamlit_text = Path("streamlit_app.py").read_text(encoding="utf-8")
+    streamlit_text = Path("archive/legacy_streamlit/streamlit_app.py").read_text(encoding="utf-8")
     uses_bad_key = 'best.get("dish_class"' in streamlit_text
     checks.append(
         {
