@@ -17,6 +17,7 @@ export interface TasteProfile {
 export interface TasteTrendPoint {
   timestamp: string
   upload_count: number
+  interaction_count?: number
   dimensions: {
     sweet_leaning: number
     spicy_leaning: number

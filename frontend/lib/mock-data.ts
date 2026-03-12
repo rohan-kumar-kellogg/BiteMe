@@ -20,9 +20,9 @@ export const mockDimensions: TasteDimension[] = [
 
 export const mockProfile: UserProfile = {
   username: 'foodie_sarah',
-  archetype: 'The Comfort Curator',
-  archetype_description: 'You have an instinct for finding the perfect balance between indulgence and satisfaction. Your palate gravitates toward dishes that feel like a warm embrace — rich, deeply satisfying, yet surprisingly diverse. You appreciate the classics but aren\'t afraid to explore when the mood strikes.',
-  archetype_graphic: 'comfort-curator',
+  archetype: 'Fries Non-Negotiable',
+  archetype_description: 'You pick comfort food that actually comforts: crispy, salty, and not pretending. You\'ve never really been against fries. Just briefly unavailable.',
+  archetype_graphic: 'assets/archetypes/fries_non_negotiable.png',
   joke: 'Your ideal date night involves a heated debate about the optimal cheese-to-pasta ratio.',
   observations: [
     'You show a strong preference for umami-rich dishes, especially those with aged cheeses and slow-cooked meats.',
@@ -59,10 +59,10 @@ export const mockProfile: UserProfile = {
     ],
   },
   compatible_users: [
-    { username: 'pasta_lover_mike', compatibility_score: 94, reason: 'You both share an exceptional love for umami-rich comfort foods and have nearly identical dessert preferences.' },
-    { username: 'chef_elena', compatibility_score: 87, reason: 'Your adventurousness and global cuisine breadth align beautifully, suggesting you\'d enjoy exploring new restaurants together.' },
-    { username: 'brunch_queen', compatibility_score: 82, reason: 'Similar comfort food tendencies and a shared appreciation for balance between rich and fresh.' },
-    { username: 'spice_explorer_jay', compatibility_score: 76, reason: 'Complementary palates — they bring the heat, you bring the umami depth.' },
+    { username: 'pasta_lover_mike', compatibility_score: 94, reason: 'You both keep ending up in the same comfort-food lane.' },
+    { username: 'chef_elena', compatibility_score: 87, reason: 'You have a similar mix of curiosity and reliable favorites.' },
+    { username: 'brunch_queen', compatibility_score: 82, reason: 'Your food habits overlap in a way that feels pretty natural.' },
+    { username: 'spice_explorer_jay', compatibility_score: 76, reason: 'You are drawn to similar kinds of meals, just with your own twist.' },
   ],
   clicked_recommendations: [
     {

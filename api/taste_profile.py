@@ -397,9 +397,13 @@ def update_taste_profile(profile: dict[str, Any], prediction: dict) -> dict[str,
         dims[k] = {"score": float(np.clip(new_score, 0.0, 1.0)), "explanation": _dim_explanation(k, new_score, profile)}
     # Keep lightweight trend snapshots for product UX.
     hist = profile["taste_profile"].setdefault("history", [])
+    interaction_count = int(profile.get("interaction_count", 0) or 0)
+    if interaction_count <= 0:
+        interaction_count = len(hist) + 1
     snapshot = {
         "timestamp": _utc_now_iso(),
         "upload_count": int(profile.get("upload_count", 0)),
+        "interaction_count": interaction_count,
         "dimensions": {k: float(dims.get(k, {}).get("score", 0.5)) for k in TREND_DIM_KEYS},
     }
     hist.append(snapshot)

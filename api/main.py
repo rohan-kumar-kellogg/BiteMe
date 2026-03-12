@@ -10,9 +10,11 @@ from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from api.archetypes import FALLBACK_ARCHETYPE, SYSTEM_ARCHETYPE, coerce_archetype_name, is_valid_archetype_name
 from api.label_normalization import normalize_prediction_labels, normalize_profile_labels
 from api.predictor import PredictionService
 from api.profile_logic import (
+    RECOMMENDATION_CLICK_SIGNAL_WEIGHT_DEFAULT,
     build_relative_rankings_for_user,
     compute_compatible_users,
     empty_profile,
@@ -97,14 +99,15 @@ def _safe_json(x):
 
 
 def _user_payload(user: dict, compatible_users: list[dict], relative_rankings: list[dict]) -> dict:
+    user_archetype = coerce_archetype_name(str(user.get("archetype", "") or ""), allow_system=True)
     taste_profile = dict(user["profile"].get("taste_profile", {}))
     taste_profile["relative_rankings"] = relative_rankings
     return {
         "username": user["username"],
         "email": str(user.get("email", "") or ""),
         "created_at": user["created_at"],
-        "archetype": user["archetype"],
-        "primary_archetype": user["profile"].get("primary_archetype", user["archetype"]),
+        "archetype": user_archetype,
+        "primary_archetype": user["profile"].get("primary_archetype", user_archetype),
         "secondary_trait": user["profile"].get("secondary_trait", ""),
         "archetype_description": user["archetype_description"],
         "archetype_graphic": user["archetype_graphic"],
@@ -112,11 +115,12 @@ def _user_payload(user: dict, compatible_users: list[dict], relative_rankings: l
         "joke": user["joke"],
         "profile": {
             "upload_count": int(user["profile"].get("upload_count", 0)),
+            "interaction_count": int(user["profile"].get("interaction_count", 0)),
             "favorite_cuisines": user["profile"].get("favorite_cuisines", {}),
             "favorite_dishes": user["profile"].get("favorite_dishes", {}),
             "favorite_traits": user["profile"].get("favorite_traits", {}),
             "recommendation_feedback": user["profile"].get("recommendation_feedback", []),
-            "primary_archetype": user["profile"].get("primary_archetype", user["archetype"]),
+            "primary_archetype": user["profile"].get("primary_archetype", user_archetype),
             "secondary_trait": user["profile"].get("secondary_trait", ""),
             "behavior_features": user["profile"].get("behavior_features", {}),
             "archetype_scores": user["profile"].get("archetype_scores", {}),
@@ -176,6 +180,20 @@ def _load_or_create(username: str, email: str | None = None) -> tuple[dict, bool
         init_taste_profile(profile)
         normalized_feedback, feedback_ids_changed = _normalize_recommendation_feedback_events(profile)
         profile["recommendation_feedback"] = normalized_feedback
+        click_events_count = sum(
+            1 for e in normalized_feedback if str(e.get("event_type", "")) == "recommendation_click"
+        )
+        inferred_interactions = int(profile.get("upload_count", 0) or 0) + int(click_events_count)
+        prev_interactions = int(profile.get("interaction_count", 0) or 0)
+        profile["interaction_count"] = max(prev_interactions, inferred_interactions)
+        if profile["interaction_count"] != prev_interactions:
+            labels_changed = True
+        prev_current = str(profile.get("archetype_current", "") or "")
+        if not is_valid_archetype_name(prev_current, allow_system=True):
+            profile["archetype_current"] = FALLBACK_ARCHETYPE
+            labels_changed = True
+
+        archetype_invalid = not is_valid_archetype_name(str(existing.get("archetype", "") or ""), allow_system=True)
         needs_analysis = "analysis" not in profile.get("taste_profile", {})
         history = profile.get("taste_profile", {}).get("history", [])
         needs_history_seed = bool(int(profile.get("upload_count", 0)) > 0 and not history)
@@ -187,6 +205,7 @@ def _load_or_create(username: str, email: str | None = None) -> tuple[dict, bool
                 {
                     "timestamp": utc_now_iso(),
                     "upload_count": int(profile.get("upload_count", 0)),
+                    "interaction_count": int(profile.get("interaction_count", 0) or profile.get("upload_count", 0)),
                     "dimensions": {
                         "sweet_leaning": float(dims.get("sweet_leaning", {}).get("score", 0.5)),
                         "spicy_leaning": float(dims.get("spicy_leaning", {}).get("score", 0.5)),
@@ -197,13 +216,17 @@ def _load_or_create(username: str, email: str | None = None) -> tuple[dict, bool
                 }
             ]
 
-        if labels_changed:
+        if labels_changed or archetype_invalid:
             archetype, desc, graphic, joke, observations = infer_archetype(profile)
             existing["archetype"] = archetype
             existing["archetype_description"] = desc
             existing["archetype_graphic"] = graphic
             existing["joke"] = joke
             existing["observations"] = "\n".join(observations)
+        else:
+            existing["archetype"] = coerce_archetype_name(existing.get("archetype", ""), allow_system=True)
+            if not existing.get("archetype"):
+                existing["archetype"] = SYSTEM_ARCHETYPE if int(profile.get("upload_count", 0)) <= 0 else FALLBACK_ARCHETYPE
 
         if clean_email and clean_email != str(existing.get("email", "")).strip().lower():
             existing["email"] = clean_email
@@ -265,7 +288,10 @@ def _rebuild_profile_from_signals(username: str, feedback_events: list[dict] | N
             profile,
             dish_label=str(e.get("dish_label", "")),
             cuisine=str(e.get("cuisine", "")),
-            signal_weight=float(e.get("signal_weight", 0.22) or 0.22),
+            signal_weight=float(
+                e.get("signal_weight", RECOMMENDATION_CLICK_SIGNAL_WEIGHT_DEFAULT)
+                or RECOMMENDATION_CLICK_SIGNAL_WEIGHT_DEFAULT
+            ),
             record_event=False,
             event_id=str(e.get("event_id", "")),
             timestamp=str(e.get("timestamp", "")),

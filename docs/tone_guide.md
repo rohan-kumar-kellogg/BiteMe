@@ -50,7 +50,7 @@ Total: **3–4 short sentences max**
 
 ## Examples
 
-### Balanced Bistro Strategist
+### Balanced, Still Hungry
 
 You’ve got range, but not the chaotic kind. Dinner rotates just enough to stay interesting without turning into a culinary identity crisis.
 

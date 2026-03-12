@@ -533,57 +533,91 @@ def _context_match_score(context: str, rest: dict[str, Any]) -> float:
 def _context_phrase(context: str) -> str:
     ctx = _norm_token(context)
     return {
-        "dinner": "it suits a dinner plan",
-        "dessert": "it fits a dessert-focused outing",
+        "dinner": "it works well for dinner",
+        "dessert": "it fits a dessert run",
         "drinks": "it works for a drinks-first plan",
-        "casual_bite": "it fits a quick casual bite",
-        "date_night": "it supports a date-night setting",
-        "brunch": "it aligns with a brunch vibe",
+        "casual_bite": "it fits a quick bite",
+        "date_night": "it works for a date-night plan",
+        "brunch": "it fits a brunch mood",
     }.get(ctx, "")
 
 
-def _reason_text(top_reasons: list[str]) -> str:
-    if not top_reasons:
-        return "Ranked for overall fit across taste and practicality."
-    if len(top_reasons) == 1:
-        return f"Good fit because {top_reasons[0]}."
-    if len(top_reasons) == 2:
-        return f"Strong match because {top_reasons[0]} and {top_reasons[1]}."
-    return f"Ranks highly because {top_reasons[0]}, {top_reasons[1]}, and {top_reasons[2]}."
+def _nice_list(items: list[str]) -> str:
+    vals = [str(x).strip() for x in items if str(x).strip()]
+    if not vals:
+        return ""
+    if len(vals) == 1:
+        return vals[0]
+    if len(vals) == 2:
+        return f"{vals[0]} and {vals[1]}"
+    return f"{', '.join(vals[:-1])}, and {vals[-1]}"
 
 
-def _dimension_reasons(
+def _display_token(token: str) -> str:
+    return str(token).replace("_", " ").strip()
+
+
+def _dish_focus_phrase(matched_dish_tags: list[str], matched_trait_tags: list[str]) -> str:
+    tags = {_norm_token(t) for t in (matched_dish_tags + matched_trait_tags)}
+    groups: list[tuple[set[str], str]] = [
+        ({"pizza"}, "pizza-heavy meals"),
+        ({"ramen", "noodles", "udon", "pho"}, "noodle bowls"),
+        ({"tacos"}, "tacos and mexican comfort plates"),
+        ({"sushi", "omakase"}, "sushi and japanese plates"),
+        ({"dessert", "pastry", "bakery", "ice_cream"}, "desserts and pastries"),
+        ({"spicy", "chili_forward", "szechuan"}, "spicy dishes"),
+        ({"salad", "healthy", "clean_eating", "light"}, "lighter, fresher plates"),
+        ({"hearty", "cozy", "classic", "comfort_food", "casual"}, "comfort-food picks"),
+        ({"protein_forward", "grill", "steakhouse", "bbq", "chicken"}, "protein-forward dishes"),
+    ]
+    hits = [label for keys, label in groups if keys & tags]
+    if not hits:
+        return ""
+    return _nice_list(hits[:2])
+
+
+def _build_explanation(
     *,
-    cuisine_score: float,
-    dish_score: float,
-    trait_score: float,
+    matched_cuisines: list[str],
+    matched_dish_tags: list[str],
+    matched_trait_tags: list[str],
     location_score: float,
     reservation_score: float,
     user_zip: str,
     rest_zip: str,
     context: str,
     context_score: float,
-) -> list[str]:
-    reasons: list[tuple[str, float]] = []
-    if cuisine_score > 0.05:
-        reasons.append(("it aligns with your strongest cuisines", cuisine_score))
-    if dish_score > 0.05:
-        reasons.append(("its menu reflects dishes you repeatedly gravitate to", dish_score))
-    if trait_score > 0.05:
-        reasons.append(("it matches your taste traits and menu style", trait_score))
-    if location_score > 0.05:
-        if _clean_zip(user_zip) == _clean_zip(rest_zip):
-            reasons.append(("it is in your zip code", location_score + 0.03))
-        else:
-            reasons.append(("it is practically nearby", location_score))
-    if reservation_score > 0.7:
-        reasons.append(("it has a clear booking or action path", reservation_score))
-    if context and context_score > 0.62:
+) -> str:
+    sentence1 = ""
+    cuisine_words = [_display_token(c) for c in matched_cuisines[:2]]
+    dish_phrase = _dish_focus_phrase(matched_dish_tags, matched_trait_tags)
+
+    if cuisine_words and dish_phrase:
+        sentence1 = f"You keep coming back to { _nice_list(cuisine_words) }, and this place is strong on {dish_phrase}."
+    elif cuisine_words:
+        sentence1 = f"You upload a lot of { _nice_list(cuisine_words) } food, and this place leans exactly that way."
+    elif dish_phrase:
+        sentence1 = f"You tend to go for {dish_phrase}, and this menu does that well."
+    elif matched_trait_tags:
+        trait_words = [_display_token(t) for t in matched_trait_tags[:2]]
+        sentence1 = f"This lines up with how you usually eat: { _nice_list(trait_words) }."
+    else:
+        sentence1 = "This lines up with what you usually go for."
+
+    sentence2 = ""
+    same_zip = _clean_zip(user_zip) and _clean_zip(user_zip) == _clean_zip(rest_zip)
+    if same_zip:
+        sentence2 = "It is in your zip, so it is an easy one to try."
+    elif location_score >= 0.70:
+        sentence2 = "It is close enough to be a realistic weeknight move."
+    elif reservation_score > 0.70:
+        sentence2 = "It is also easy to book when you want to go."
+    elif context and context_score > 0.62:
         phrase = _context_phrase(context)
         if phrase:
-            reasons.append((phrase, context_score))
-    reasons = sorted(reasons, key=lambda x: x[1], reverse=True)
-    return [r[0] for r in reasons[:3]]
+            sentence2 = f"It also works because {phrase}."
+
+    return f"{sentence1} {sentence2}".strip()
 
 
 def _score_restaurant(user_profile: dict[str, Any], zip_code: str, rest: dict[str, Any], *, context: str = "") -> dict[str, Any]:
@@ -641,10 +675,10 @@ def _score_restaurant(user_profile: dict[str, Any], zip_code: str, rest: dict[st
         total *= 0.86
     if venue_type in {"dessert", "cafe"} and dessert_strength >= 0.88 and dish_reliability >= 0.40:
         total *= 1.08
-    reasons = _dimension_reasons(
-        cuisine_score=cuisine_score,
-        dish_score=dish_score,
-        trait_score=trait_score,
+    explanation = _build_explanation(
+        matched_cuisines=matched_cuisines,
+        matched_dish_tags=matched_dish_tags,
+        matched_trait_tags=matched_trait_tags,
         location_score=location_score,
         reservation_score=reservation_score,
         user_zip=zip_code,
@@ -688,7 +722,7 @@ def _score_restaurant(user_profile: dict[str, Any], zip_code: str, rest: dict[st
             "raw_score": round(total, 4),
             "display_percent": round(displayed_percent, 2),
         },
-        "explanation": _reason_text(reasons),
+        "explanation": explanation,
         "booking_action": booking_action,
         "action": {
             # Backward-compatible action envelope; frontend can migrate to booking_action.

@@ -78,7 +78,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_global_nomad",
             title="adventurous global eater",
-            target_archetype="Global Street-Food Hunter",
+            target_archetype="Passport Palate",
             uploads_n=16,
             primary=[DishSpec("pho", "Vietnamese", "beef"), DishSpec("paella", "Spanish", "seafood"), DishSpec("bibimbap", "Korean", "egg")],
             secondary=[DishSpec("tacos", "Mexican", "beef"), DishSpec("ramen", "Japanese", "pork"), DishSpec("chicken_curry", "Indian", "chicken")],
@@ -87,7 +87,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_comfort_loyalist",
             title="comfort food loyalist",
-            target_archetype="Comfort-Core Loyalist",
+            target_archetype="Fries Non-Negotiable",
             uploads_n=14,
             primary=[DishSpec("mac_and_cheese", "American", "vegetarian"), DishSpec("lasagna", "Italian", "beef"), DishSpec("burger_and_fries", "American", "beef")],
             secondary=[DishSpec("pizza", "Italian", "pork"), DishSpec("fried_chicken", "American", "chicken"), DishSpec("poutine", "Canadian", "beef")],
@@ -96,7 +96,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_dessert_first",
             title="dessert-first person",
-            target_archetype="Dessert Radar Commander",
+            target_archetype="Dessert First",
             uploads_n=13,
             primary=[DishSpec("chocolate_mousse", "French", "vegetarian"), DishSpec("cheesecake", "American", "vegetarian"), DishSpec("tiramisu", "Italian", "vegetarian")],
             secondary=[DishSpec("apple_pie", "American", "vegetarian"), DishSpec("ice_cream_sundae", "American", "vegetarian"), DishSpec("panna_cotta", "Italian", "vegetarian")],
@@ -105,7 +105,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_protein_savory",
             title="protein-heavy savory person",
-            target_archetype="Protein-First Performer",
+            target_archetype="Late Night Menu",
             uploads_n=15,
             primary=[DishSpec("steak", "American", "beef"), DishSpec("grilled_salmon", "American", "fish"), DishSpec("chicken_souvlaki", "Mediterranean", "chicken")],
             secondary=[DishSpec("pork_chop", "American", "pork"), DishSpec("beef_tartare", "French", "beef"), DishSpec("lamb_chops", "Mediterranean", "lamb")],
@@ -114,7 +114,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_spice_explorer",
             title="spice-seeking explorer",
-            target_archetype="Spice Orbit Captain",
+            target_archetype="Spicy or Bust",
             uploads_n=15,
             primary=[DishSpec("vindaloo", "Indian", "pork"), DishSpec("spicy_tteokbokki", "Korean", "fish"), DishSpec("hot_and_sour_soup", "Chinese", "chicken")],
             secondary=[DishSpec("spicy_ramen", "Japanese", "pork"), DishSpec("green_curry", "Thai", "chicken"), DishSpec("mapo_tofu", "Chinese", "vegetarian")],
@@ -123,7 +123,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_balanced_broad",
             title="balanced broad-taste user",
-            target_archetype="Balanced Bistro Strategist",
+            target_archetype="Balanced, Still Hungry",
             uploads_n=18,
             primary=[DishSpec("salmon_and_veggies", "American", "fish"), DishSpec("sushi", "Japanese", "fish"), DishSpec("pasta_primavera", "Italian", "vegetarian")],
             secondary=[DishSpec("chicken_tacos", "Mexican", "chicken"), DishSpec("pad_thai", "Thai", "chicken"), DishSpec("bruschetta", "Italian", "vegetarian")],
@@ -132,7 +132,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_fresh_greens",
             title="freshness-forward eater",
-            target_archetype="Plant-Forward Explorer",
+            target_archetype="Salad, But Good",
             uploads_n=12,
             primary=[DishSpec("greek_salad", "Mediterranean", "vegetarian"), DishSpec("ceviche", "Peruvian", "seafood"), DishSpec("caprese_salad", "Italian", "vegetarian")],
             secondary=[DishSpec("sashimi", "Japanese", "fish"), DishSpec("poke_bowl", "Hawaiian", "fish"), DishSpec("gazpacho", "Spanish", "vegetarian")],
@@ -141,7 +141,7 @@ def _personas() -> list[DemoPersona]:
         DemoPersona(
             username="demo_carb_crush",
             title="carb-forward enthusiast",
-            target_archetype="Carb Compass Romantic",
+            target_archetype="Soup Noodle Person",
             uploads_n=14,
             primary=[DishSpec("ramen", "Japanese", "pork"), DishSpec("pasta_carbonara", "Italian", "pork"), DishSpec("margherita_pizza", "Italian", "vegetarian")],
             secondary=[DishSpec("dumplings", "Chinese", "pork"), DishSpec("garlic_bread", "Italian", "vegetarian"), DishSpec("fried_rice", "Chinese", "chicken")],
@@ -170,8 +170,8 @@ def _archetype_payload(persona: DemoPersona, profile: dict) -> tuple[str, str, s
         f"Upload pattern repeatedly reinforces {persona.target_archetype.lower()} tendencies.",
         f"Most frequent dishes include: {', '.join([d.label for d in persona.primary[:2]])}.",
     ]
-    desc = f"{meta.long_description_seed} Demo profile seeded to showcase a clear, stable behavior pattern for UI testing."
-    return persona.target_archetype, desc, meta.graphic_key, meta.joke, obs
+    desc = f"{meta.description} {meta.dry_observation}"
+    return persona.target_archetype, desc, f"assets/archetypes/{meta.graphic_key}.png", meta.joke, obs
 
 
 def main():
@@ -218,6 +218,7 @@ def main():
         created_at = utc_now_iso()
         store.upsert_user(
             username=p.username,
+            email=f"{p.username}@demo.local",
             created_at=created_at,
             archetype=archetype,
             archetype_description=desc,

@@ -140,7 +140,7 @@ function mapCompatibleUsers(rows: ApiCompatibleUser[] | undefined): CompatibleUs
     username: u.compatible_username,
     email: u.compatible_email || '',
     compatibility_score: toPercent(Number(u.compatibility_score || 0)),
-    reason: u.why_you_match || 'Similar flavor fingerprint and food behavior patterns.',
+    reason: u.why_you_match || 'Your food habits overlap in a way that feels natural.',
   }))
 }
 
@@ -212,6 +212,7 @@ function mapRecentUploads(rows: ApiUpload[] | undefined): RecentUpload[] {
 function mapTrendHistory(rows: Array<{
   timestamp?: string
   upload_count?: number
+  interaction_count?: number
   dimensions?: {
     sweet_leaning?: number
     spicy_leaning?: number
@@ -225,6 +226,7 @@ function mapTrendHistory(rows: Array<{
     .map((x) => ({
       timestamp: String(x?.timestamp || ''),
       upload_count: Number(x?.upload_count || 0),
+      interaction_count: Number(x?.interaction_count || 0),
       dimensions: {
         sweet_leaning: toPercent(Number(x?.dimensions?.sweet_leaning || 0)),
         spicy_leaning: toPercent(Number(x?.dimensions?.spicy_leaning || 0)),
