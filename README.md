@@ -67,6 +67,8 @@ flowchart LR
 
 ## AI Component Overview (Model Card Summary)
 
+A full model card for the AI system is available at: `docs/model_card.md`.
+
 ### Model Type
 
 CLIP-based vision embedding pipeline that converts images into embeddings and uses embedding retrieval with reranking to predict likely dishes. These predictions are then converted into structured taste signals that drive the profile, archetype, and recommendation logic.
