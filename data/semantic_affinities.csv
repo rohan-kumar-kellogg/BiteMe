@@ -1,0 +1,7 @@
+affinity,positive_prompt,negative_prompt
+peruvian,"peruvian cuisine, ceviche with red onion and lime | peruvian food plating, andean or coastal peruvian dish | leche de tigre style seafood with citrus","not peruvian cuisine | generic western dish, no peruvian cues | plain sandwich or burger, not latin seafood"
+japanese,"japanese cuisine, sushi or ramen presentation | japanese dish with clean minimal plating | soy-based japanese food style",not japanese cuisine | western fast food style | no japanese food cues
+italian,"italian cuisine, pasta pizza risotto style | italian dish with tomato and basil presentation | rustic italian plating",not italian cuisine | no pasta pizza or risotto cues | non-italian food style
+mexican,"mexican cuisine, tacos salsa lime cilantro | mexican food with chili and corn tortilla | street-style mexican dish plating",not mexican cuisine | no tortilla or salsa cues | non-mexican food style
+seafood_focused,seafood dish with fish or shellfish | plated fish fillet or shrimp dish | ceviche-like raw fish with citrus,meat-heavy dish without seafood | beef or chicken focused plate | no fish or shellfish visible
+acidic_bright,acidic bright dish with citrus and vinegar notes | fresh lime or lemon dressed seafood salad | tangy citrus-forward plated food,"rich heavy creamy dish, not acidic | bland or neutral tasting appearance | no citrus or tangy cues"

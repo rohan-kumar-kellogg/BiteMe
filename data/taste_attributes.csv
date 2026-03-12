@@ -1,0 +1,8 @@
+attribute,positive_prompt,negative_prompt
+spicy,a very spicy dish with red chili peppers | spicy food with chili oil and pepper flakes | a bowl of spicy curry with visible chili,"a mild dish, not spicy | gentle flavors, no chili peppers | not spicy food"
+umami,"an umami-rich savory dish, deeply savory | a dish with soy sauce, miso, or mushrooms | savory broth, ramen-like umami","a bland dish, not savory | not umami, very plain food | watery soup with little flavor"
+sweet,"a sweet dessert, sugary, sweet food | a pastry or cake with icing | sweet syrup or caramel on dessert","not sweet, savory food | no sugar, not dessert | a savory main course, not sweet"
+sour,"a sour dish, citrus, vinegar, tangy | a dish with lemon wedges, very tangy | pickled or vinegar-forward food","not sour, not tangy | no citrus, no vinegar | neutral tasting food, not sour"
+creamy,"a creamy rich dish with creamy sauce | cheesy and buttery, rich creamy texture | a dish covered in white cream sauce","not creamy, dry food | clear broth, not creamy | no sauce, not rich"
+crispy,"a crispy crunchy fried dish, crunchy texture | golden-brown fried food, very crunchy | crispy breaded cutlet with crunch","not crispy, soft texture | steamed or boiled food, soft | no crunch, not fried"
+smoky,"a smoky grilled dish, charred, barbecue | grilled meat with char marks, smoky | barbecue sauce and smoked flavor","not smoky, not grilled | no char, not barbecue | steamed food, not smoky"

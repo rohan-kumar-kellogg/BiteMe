@@ -1,0 +1,77 @@
+[
+    {"id":"burl","name":"Burl","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["american","contemporary"],"trait_tags":["cozy","date_night"],"menu_tags":["dessert","seasonal","cocktails"],"service_type":"sit_down","reservation_provider":"opentable","rating":4.6},
+    
+    {"id":"union-pizzeria","name":"Union Pizzeria","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["italian","pizza"],"trait_tags":["casual","date_night"],"menu_tags":["pizza","pasta","dessert"],"service_type":"sit_down","reservation_provider":"opentable","rating":4.5},
+    
+    {"id":"found-kitchen","name":"Found Kitchen and Social House","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["american","farm_to_table"],"trait_tags":["cozy","date_night"],"menu_tags":["seasonal","dessert"],"service_type":"sit_down","reservation_provider":"opentable","rating":4.6},
+    
+    {"id":"oceanique","name":"Oceanique","city":"Evanston","state":"IL","zip_code":"60202","cuisine_tags":["french","seafood"],"trait_tags":["fine_dining","date_night"],"menu_tags":["tasting_menu","dessert"],"service_type":"sit_down","reservation_provider":"opentable","rating":4.7},
+    
+    {"id":"blind-faith","name":"Blind Faith Cafe","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["vegetarian"],"trait_tags":["healthy","casual"],"menu_tags":["salads","vegetarian","dessert"],"service_type":"sit_down","reservation_provider":"none","rating":4.5},
+    
+    {"id":"hewn","name":"Hewn Bakery","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["bakery"],"trait_tags":["cafe","casual"],"menu_tags":["bread","pastry","dessert"],"service_type":"cafe","reservation_provider":"none","rating":4.7},
+    
+    {"id":"frio","name":"Frio Gelato","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["dessert","italian"],"trait_tags":["dessert_spot"],"menu_tags":["gelato","dessert"],"service_type":"dessert_shop","reservation_provider":"none","rating":4.6},
+    
+    {"id":"hartigans","name":"Hartigan's Ice Cream Shoppe","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["dessert"],"trait_tags":["dessert_spot"],"menu_tags":["ice_cream","dessert"],"service_type":"dessert_shop","reservation_provider":"none","rating":4.5},
+    
+    {"id":"peppercorns","name":"Peppercorns Kitchen","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["chinese","szechuan"],"trait_tags":["spicy","casual"],"menu_tags":["dumplings","noodles","spicy"],"service_type":"sit_down","reservation_provider":"none","rating":4.6},
+    
+    {"id":"table-to-stix","name":"Table to Stix Ramen","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["japanese"],"trait_tags":["casual"],"menu_tags":["ramen","noodles"],"service_type":"sit_down","reservation_provider":"none","rating":4.6},
+    
+    {"id":"tapas-barcelona","name":"Tapas Barcelona","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["spanish"],"trait_tags":["date_night"],"menu_tags":["tapas","dessert"],"service_type":"sit_down","reservation_provider":"none","rating":4.4},
+    
+    {"id":"prairie-moon","name":"Prairie Moon","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["american"],"trait_tags":["cozy"],"menu_tags":["comfort_food","dessert"],"service_type":"sit_down","reservation_provider":"none","rating":4.4},
+    
+    {"id":"cupitol","name":"Cupitol Coffee & Eatery","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["cafe"],"trait_tags":["cafe","casual"],"menu_tags":["coffee","pastry","dessert"],"service_type":"cafe","reservation_provider":"none","rating":4.5},
+    
+    {"id":"lucky-platter","name":"Lucky Platter","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["american"],"trait_tags":["casual","brunch"],"menu_tags":["brunch","dessert"],"service_type":"sit_down","reservation_provider":"none","rating":4.4},
+    
+    {"id":"peckish-pig","name":"The Peckish Pig","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["gastropub"],"trait_tags":["casual"],"menu_tags":["burgers","beer"],"service_type":"sit_down","reservation_provider":"none","rating":4.4},
+    
+    {"id":"nakorn","name":"NaKorn Urban Thai","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["thai"],"trait_tags":["spicy"],"menu_tags":["curry","noodles","spicy"],"service_type":"sit_down","reservation_provider":"none","rating":4.6},
+    
+    {"id":"mira-sushi","name":"Mira Sushi","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["japanese"],"trait_tags":["casual"],"menu_tags":["sushi","ramen"],"service_type":"sit_down","reservation_provider":"none","rating":4.5},
+    
+    {"id":"todoroki","name":"Todoroki Sushi","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["japanese"],"trait_tags":["casual"],"menu_tags":["sushi","ramen"],"service_type":"sit_down","reservation_provider":"none","rating":4.5},
+    
+    {"id":"bat17","name":"Bat 17","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["american"],"trait_tags":["casual"],"menu_tags":["sandwich","comfort_food"],"service_type":"sit_down","reservation_provider":"none","rating":4.4},
+    
+    {"id":"big-wig","name":"Big Wig Tacos","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["mexican"],"trait_tags":["casual"],"menu_tags":["tacos","spicy"],"service_type":"quick_service","reservation_provider":"none","rating":4.4},
+    
+    {"id":"bennisons","name":"Bennison's Bakery","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["bakery"],"trait_tags":["dessert_spot"],"menu_tags":["cake","pastry","dessert"],"service_type":"dessert_shop","reservation_provider":"none","rating":4.6},
+    
+    {"id":"comida-cantina","name":"Comida Cantina","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["mexican"],"trait_tags":["casual"],"menu_tags":["tacos","margaritas"],"service_type":"sit_down","reservation_provider":"none","rating":4.3},
+    
+    {"id":"five-dime","name":"Five & Dime","city":"Evanston","state":"IL","zip_code":"60201","cuisine_tags":["american"],"trait_tags":["casual"],"menu_tags":["comfort_food"],"service_type":"sit_down","reservation_provider":"none","rating":4.2},
+    
+        {"id":"alinea","name":"Alinea","city":"Chicago","state":"IL","zip_code":"60614","cuisine_tags":["molecular","fine_dining"],"trait_tags":["adventurous","date_night"],"menu_tags":["tasting_menu","dessert"],"service_type":"sit_down","reservation_provider":"resy","rating":4.8},
+        
+        {"id":"girl-goat","name":"Girl & The Goat","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["american","global"],"trait_tags":["trendy","date_night"],"menu_tags":["small_plates","dessert"],"service_type":"sit_down","reservation_provider":"resy","rating":4.7},
+        
+        {"id":"au-cheval","name":"Au Cheval","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["american"],"trait_tags":["casual","trendy"],"menu_tags":["burger","dessert"],"service_type":"sit_down","reservation_provider":"none","rating":4.7},
+        
+        {"id":"avec","name":"Avec","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["mediterranean"],"trait_tags":["date_night","cozy"],"menu_tags":["small_plates","dessert"],"service_type":"sit_down","reservation_provider":"resy","rating":4.6},
+        
+        {"id":"publican","name":"The Publican","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["gastropub"],"trait_tags":["trendy"],"menu_tags":["pork","beer"],"service_type":"sit_down","reservation_provider":"opentable","rating":4.6},
+        
+        {"id":"loyalist","name":"The Loyalist","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["american"],"trait_tags":["casual"],"menu_tags":["burger","dessert"],"service_type":"sit_down","reservation_provider":"none","rating":4.6},
+        
+        {"id":"monteverde","name":"Monteverde","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["italian"],"trait_tags":["date_night"],"menu_tags":["pasta","dessert"],"service_type":"sit_down","reservation_provider":"resy","rating":4.7},
+        
+        {"id":"rose-mary","name":"Rose Mary","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["croatian","italian"],"trait_tags":["date_night"],"menu_tags":["pasta","seafood"],"service_type":"sit_down","reservation_provider":"resy","rating":4.6},
+        
+        {"id":"cabras","name":"Cabra","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["peruvian"],"trait_tags":["trendy"],"menu_tags":["small_plates","cocktails"],"service_type":"sit_down","reservation_provider":"resy","rating":4.6},
+        
+        {"id":"kasama","name":"Kasama","city":"Chicago","state":"IL","zip_code":"60622","cuisine_tags":["filipino"],"trait_tags":["trendy"],"menu_tags":["pastry","dessert"],"service_type":"cafe","reservation_provider":"none","rating":4.8},
+        
+        {"id":"boka","name":"Boka","city":"Chicago","state":"IL","zip_code":"60614","cuisine_tags":["contemporary"],"trait_tags":["date_night"],"menu_tags":["tasting_menu","dessert"],"service_type":"sit_down","reservation_provider":"opentable","rating":4.7},
+        
+        {"id":"galit","name":"Galit","city":"Chicago","state":"IL","zip_code":"60647","cuisine_tags":["middle_eastern"],"trait_tags":["trendy"],"menu_tags":["hummus","dessert"],"service_type":"sit_down","reservation_provider":"resy","rating":4.7},
+        
+        {"id":"elske","name":"Elske","city":"Chicago","state":"IL","zip_code":"60607","cuisine_tags":["scandinavian"],"trait_tags":["date_night"],"menu_tags":["dessert","tasting_menu"],"service_type":"sit_down","reservation_provider":"resy","rating":4.7},
+        
+        {"id":"sepia","name":"Sepia","city":"Chicago","state":"IL","zip_code":"60661","cuisine_tags":["american","contemporary"],"trait_tags":["date_night"],"menu_tags":["seasonal","dessert"],"service_type":"sit_down","reservation_provider":"opentable","rating":4.6},
+        
+        {"id":"lula","name":"Lula Cafe","city":"Chicago","state":"IL","zip_code":"60647","cuisine_tags":["american","farm_to_table"],"trait_tags":["cozy"],"menu_tags":["brunch","dessert"],"service_type":"sit_down","reservation_provider":"none","rating":4.6}
+        ]

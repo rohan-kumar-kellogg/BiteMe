@@ -1,20 +1,37 @@
 # Python
 .venv/
+venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
 # Node
 node_modules/
 .next/
+dist/
+out/
 
 # Mac
 .DS_Store
 
+# Env
+.env
+.env.local
+
 # IDE
 .idea/
 
-# datasets
-data/
+# Large datasets / caches
+data/UECFOOD256/
+data/cache/
+
+# Runtime-generated artifacts
+data/api_uploads/
+data/user_profiles/
+data/user_history.csv
+
+# Other large local assets
 food101_data/
 images/
 public_images/
